@@ -1,0 +1,9 @@
+---
+# Role metadata: what this role is and what must run before it
+galaxy_info:
+ role_name: baseline
+ author: Carlos Akin
+ license: MIT
+ description: NARR baseline hardening for Rocky 9 and Debian 12
+ min_ansible_version: "2.16"
+dependencies: []

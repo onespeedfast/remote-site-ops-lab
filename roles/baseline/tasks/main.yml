@@ -1,0 +1,160 @@
+---
+# Part 1: packages and the admin account
+
+- name: Install baseline packages (Rocky)
+  ansible.builtin.dnf:
+   name: "{{ baseline_packages_rocky }}"
+   state: present
+  when: ansible_os_family == "RedHat"
+
+- name: Install baseline packages (Debian)
+  ansible.builtin.apt:
+   name: "{{ baseline_packages_debian }}"
+   state: present
+   update_cache: true
+   cache_valid_time: 3600
+  when: ansible_os_family == "Debian"
+
+- name: Ensure admin user exists and is in the sudo group
+  ansible.builtin.user:
+   name: "{{ baseline_admin_user }}"
+   groups: "{{ 'wheel' if ansible_os_family == 'RedHat' else 'sudo' }}"
+   append: true
+   shell: /bin/bash
+   state: present
+
+- name: Passwordless sudo for admin (lab only; tighten in lab 7)
+  ansible.builtin.copy:
+   dest: "/etc/sudoers.d/{{ baseline_admin_user }}"
+   content: "{{ baseline_admin_user }} ALL=(ALL) NOPASSWD:ALL\n"
+   owner: root
+   group: root
+   mode: "0440"
+   validate: "visudo -cf %s"
+
+- name: Install admin SSH public key from the control node
+  ansible.posix.authorized_key:
+   user: "{{ baseline_admin_user }}"
+   key: "{{ lookup('file', lookup('env', 'HOME') + '/.ssh/narr_ed25519.pub' ) }}"
+   state: present
+
+# Part 2: time & SELinux
+
+- name: Set time zone
+  community.general.timezone:
+   name: "{{ baseline_timezone }}"
+
+- name: Time sync running now and at boot
+  ansible.builtin.service:
+   # Rocky calls it chronyd, Debian calls it chrony
+   name: "{{ 'chronyd' if ansible_os_family == 'RedHat' else 'chrony' }}"
+   state: started
+   enabled: true
+
+- name: Keep SELinux enforcing with the targeted policy (Rocky)
+  ansible.posix.selinux:
+   policy: targeted
+   state: enforcing
+  when: ansible_os_family == "RedHat"
+
+# Part 3: ssh hardening
+# Lockout trap: these lines turn off passwords and root login
+# Apply them only after proving key login + sudo work for the
+#  admin user. sshd keeps the first value it reads for each
+#  setting and reads sshd_config.d/*.conf in name
+#  order so our 10- file beats the 50- distro files
+# The content: | is a YAML block ... everything after is written into the
+#  file exactly as shown
+
+- name: Install sshd hardening drop-in
+  ansible.builtin.copy:
+   dest: /etc/ssh/sshd_config.d/10-narr-hardening.conf
+   owner: root
+   group: root
+   mode: "0600"
+   content: |
+    # Managed by Ansible (remote-site-ops-lab). Do not edit by hand.
+    PermitRootLogin no
+    PasswordAuthentication no
+    KbdInteractiveAuthentication no
+    X11Forwarding no
+    AllowUsers {{ baseline_admin_user }}
+  notify: Restart sshd
+  tags: [ssh_hardening]
+
+- name: Test the full sshd config before any restart
+  ansible.builtin.command: /usr/sbin/sshd -t
+  changed_when: false
+  tags: [ssh_hardening]
+
+- name: Ensure sshd is running and enabled
+  ansible.builtin.service:
+   name: "{{ 'sshd' if ansible_os_family == 'RedHat' else 'ssh' }}"
+   state: started
+   enabled: true
+
+# Part 4: firewall
+# remember with rhel we have runtime and permanent rules
+# runtime is set now
+# permanent survives a reboot
+
+- name: Start and enable firewalld (Rocky)
+  ansible.builtin.service:
+   name: firewalld
+   state: started
+   enabled: true
+  when: ansible_os_family == "RedHat"
+
+- name: Allow SSH in firewalld (Rocky)
+  ansible.posix.firewalld:
+   service: ssh
+   permanent: true
+   immediate: true
+   state: enabled
+  when: ansible_os_family == "RedHat"
+
+# ufw order matters: allow ssh before ordering or you will be cut off
+#  during your own session
+# policy: deny makes deny the default for incoming traffic
+
+- name: Allow SSH in ufw (Debian)
+  community.general.ufw:
+   rule: allow
+   name: OpenSSH
+  when: ansible_os_family == "Debian"
+
+- name: Enable ufw, deny inbound by default (Debian)
+  community.general.ufw:
+   state: enabled
+   policy: deny
+  when: ansible_os_family == "Debian"
+
+# Part 5: automatic security updates
+
+- name: Configure dnf-automatic for security updates only (Rorcky)
+  ansible.builtin.lineinfile:
+   path: /etc/dnf/automatic.conf
+   regexp: "{{ item.regexp }}"
+   line: "{{ item.line }}"
+  loop:
+   - { regexp: ^upgrade_type', line: 'upgrade_type = security'}
+   - { regexp: '^apply_updates', line: 'apply_updates = yes'}
+  when: ansible_os_family == "RedHat"
+
+- name: Enable the dnf-automatic timer (Rocky)
+  ansible.builtin.service:
+   name: dnf-automatic.timer
+   state: started
+   enabled: true
+  when: ansible_os_family == "RedHat"
+
+- name: Turn on unattended-upgrades (Debian)
+  ansible.builtin.copy:
+   dest: /etc/apt/apt.conf.d/20auto-upgrades
+   owner: root
+   group: root
+   mode: "0644"
+   content: |
+    APT::Periodic::Update-Package-Lists "1";
+    APT::Periodic::Unattended-Upgrade "1";
+  when: ansible_os_family == "Debian"

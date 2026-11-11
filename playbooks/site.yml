@@ -1,0 +1,8 @@
+---
+# site.yml: the whole site in order. It grows as the lab grows
+- name: NARR baseline (every host)
+  hosts: all
+  gather_facts: true
+  become: true
+  roles:
+   - role: baseline

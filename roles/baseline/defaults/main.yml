@@ -1,0 +1,22 @@
+---
+# Role defaults: the LOWEST-priority values. group_vars override them.
+# "x | default('y')" means: use x if it's set, otherwise y.
+baseline_admin_user: "{{ narr_admin_user | default('labadmin') }}"
+baseline_timezone: "{{ narr_timezone | default('UTC') }}"
+
+# Packages every rocky host gets
+baseline_packages_rocky:
+ - chrony                        # time sync
+ - firewalld                     # rockys firewall service
+ - sudo
+ - policycoreutils-python-utils  # semanage, for SELinux labels
+ - setools-console               # seinfo/sesearch, SELinux queries
+ - dnf-automatic                 # scheduled security updates
+
+# Packages every debian host gets
+baseline_packages_debian:
+ - chrony                        # time sync
+ - ufw                           # debians firewall
+ - sudo
+ - unattended-upgrades           # scheduled security updates
+ - apt-listchanges

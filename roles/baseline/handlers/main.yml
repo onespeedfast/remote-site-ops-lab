@@ -1,0 +1,11 @@
+---
+# Handlers run when notified by a task when the task changed something.
+# It runs once at the end of the play
+
+- name: Restart sshd
+  ansible.builtin.service:
+   # Rocky calls the service sshd, Debian calls it ssh
+   name: "{{ 'sshd' if ansible_os_family == 'RedHat' else 'ssh' }}"
+   state: restarted
+
+
