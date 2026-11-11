@@ -1,0 +1,5 @@
+---
+# Settings for the app tier only (narr-app01).
+# Overrides the Tideboard role's default port. If a site needs
+#  a different port, change it here, not inside the role.
+tideboard_http_port: 8080

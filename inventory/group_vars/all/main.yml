@@ -1,0 +1,13 @@
+---
+# Settings shared by every NARR host.
+
+# Account Ansible logs in as
+ansible_user: labadmin
+
+# Admin account the baseline role manages
+#  custom variable to be used later
+narr_admin_user: labadmin
+
+# Site time zone, so log timestamps line up across hosts
+#  custom variable to be used later
+narr_timezone: America/Chicago
