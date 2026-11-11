@@ -1,0 +1,17 @@
+*.pem
+id_*
+.vault_pass*
+.venv/
+inventory/local*
+~/.narr-vault-pass
+*.retry
+__pycache__/
+*.pyc
+inventory/hosts.local.yml
+*.local.yml
+*.vault_password
+.narr-vault-pass
+*.qcow2
+*.iso
+*.img
+
