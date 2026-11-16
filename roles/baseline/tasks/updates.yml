@@ -1,0 +1,30 @@
+---
+- name: Configure dnf-automatic for security updates for Rocky only
+  ansible.builtin.lineinfile:
+    path: /etc/dnf/automatic.conf
+    regexp: "{{ item.regexp }}"
+    line: "{{ item.line }}"
+  loop:
+    - regexp: '^upgrade_type'
+      line: 'upgrade_type = security'
+    - regexp: '^apply_updates'
+      line: 'apply_updates = yes'
+  when: ansible_os_family == "RedHat"
+
+- name: Enable the dnf-automatic timer for Rocky
+  ansible.builtin.service:
+    name: dnf-automatic.timer
+    state: started
+    enabled: true
+  when: ansible_os_family == "RedHat"
+
+- name: Turn on unattended upgrades for Debian
+  ansible.builtin.copy:
+    dest: /etc/apt/apt.conf.d/20auto-upgrades
+    owner: root
+    group: root
+    mode: "0644"
+    content: |
+      APT::Periodic::Update-Package-Lists "1";
+      APT::Periodic::Unattended-Upgrade "1";
+  when: ansible_os_family == "Debian"

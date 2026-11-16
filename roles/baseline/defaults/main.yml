@@ -4,19 +4,9 @@
 baseline_admin_user: "{{ narr_admin_user | default('labadmin') }}"
 baseline_timezone: "{{ narr_timezone | default('UTC') }}"
 
-# Packages every rocky host gets
-baseline_packages_rocky:
- - chrony                        # time sync
- - firewalld                     # rockys firewall service
- - sudo
- - policycoreutils-python-utils  # semanage, for SELinux labels
- - setools-console               # seinfo/sesearch, SELinux queries
- - dnf-automatic                 # scheduled security updates
+# Login message /etc/motd group_vars set the real wording
+baseline_motd_banner: "Authorized use only."
+baseline_host_purpose: "unassigned"
 
-# Packages every debian host gets
-baseline_packages_debian:
- - chrony                        # time sync
- - ufw                           # debians firewall
- - sudo
- - unattended-upgrades           # scheduled security updates
- - apt-listchanges
+# A site can add packages without editing the role
+baseline_extra_packages: []

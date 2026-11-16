@@ -1,0 +1,10 @@
+---
+- name: Set time zone
+  community.general.timezone:
+    name: "{{ baseline_timezone }}"
+
+- name: Time sync running now and at boot
+  ansible.builtin.service:
+    name: "{{ baseline_chrony_service }}"
+    state: started
+    enabled: true

@@ -1,0 +1,3 @@
+---
+# Settings for the bastion tier
+baseline_host_purpose: "Adming jump host"

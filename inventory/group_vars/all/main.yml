@@ -11,3 +11,8 @@ narr_admin_user: labadmin
 # Site time zone, so log timestamps line up across hosts
 #  custom variable to be used later
 narr_timezone: America/Chicago
+
+# Login banner on every host
+baseline_motd_banner: >-
+  NARR / Meridian Range Support. Authorized use only.
+  Activity on this system may be monitored and logged.
