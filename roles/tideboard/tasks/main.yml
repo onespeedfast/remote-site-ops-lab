@@ -1,4 +1,18 @@
 ---
+# Fail fast, before touching the host, if the vault mapping
+#  is broken. The message names files, never values
+- name: Check the Tideboard secrets arrived from the vault
+  ansible.builtin.assert:
+    that:
+      - tideboard_api_token is defined
+      - tideboard_api_token | length >= 32
+      - tideboard_db_password is defined
+      - tideboard_db_password | length >= 32
+    fail_msg: >-
+      Tideboard secrets missing or too short. Check vault_tideboard_*
+      in inventory/group_vars/app/vault.yml and the mapping in
+      inventory/group_vars/app/main.yml.
+    quiet: true
 - name: Project folder on the app host
   ansible.builtin.file:
     path: "{{ tideboard_dir }}"
