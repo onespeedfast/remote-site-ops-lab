@@ -6,3 +6,17 @@
   become: true
   roles:
    - role: baseline
+
+- name: NARR docker engines (app + logging tiers)
+  hosts: app:logging
+  gather_facts: true
+  become: true
+  roles:
+   - role: docker
+
+- name: NARR Tideboard application (app tier)
+  hosts: app
+  gather_facts: true
+  become: true
+  roles:
+   - role: tideboard
