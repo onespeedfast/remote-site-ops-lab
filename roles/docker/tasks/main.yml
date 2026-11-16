@@ -1,0 +1,97 @@
+---
+# Rocky 9
+
+- name: Install dnf plugins, which provide "dnf config-manager" (Rocky)
+  ansible.builtin.dnf:
+   name: dnf-plugins-core
+   state: present
+  when: ansible_os_family == "RedHat"
+
+- name: Add Docker CE repo (Rocky uses Docker's RHEL repo)
+  ansible.builtin.command:
+   cmd: >-
+    dnf config-manager --add-repo
+    https://download.docker.com/linux/rhel/docker-ce.repo
+   creates: /etc/yum.repos.d/docker-ce.repo
+  when: ansible_os_family == "RedHat"
+
+- name: Install Docker CE (Rocky)
+  ansible.builtin.dnf:
+   name: "{{ docker_packages }}"
+   state: present
+  when: ansible_os_family == "RedHat"
+
+# Debian 12
+
+- name: Remove distro docker packages that conflict (Debian)
+  ansible.builtin.apt:
+   name:
+    - docker.io
+    - docker-compose
+    - docker-doc
+    - podman-docker
+    - containerd
+    - runc
+   state: absent
+  when: ansible_os_family == "Debian"
+
+- name: Repo prerequisites (Debian)
+  ansible.builtin.apt:
+   name: [ca-certificates, curl]
+   state: present
+   update_cache: true
+   cache_valid_time: 3600
+  when: ansible_os_family == "Debian"
+
+- name: Folder for third-party repo keys (Debian)
+  ansible.builtin.file:
+   path: /etc/apt/keyrings
+   state: directory
+   mode: "0755"
+  when: ansible_os_family == "Debian"
+
+- name: Download Docker's signing key (Debian)
+  ansible.builtin.get_url:
+   url: https://download.docker.com/linux/debian/gpg
+   dest: /etc/apt/keyrings/docker.asc
+   mode: "0644"
+  when: ansible_os_family == "Debian"
+
+- name: Add Docker apt source, trusted only with that key (Debian)
+  ansible.builtin.copy:
+   dest: /etc/apt/sources.list.d/docker.sources
+   mode: "0644"
+   content: |
+    Types: deb
+    URIs: https://download.docker.com/linux/debian
+    Suites: {{ ansible_distribution_release }}
+    Components: stable
+    Architectures: amd64
+    Signed-By: /etc/apt/keyrings/docker.asc
+  when: ansible_os_family == "Debian"
+
+- name: Install Docker CE (Debian)
+  ansible.builtin.apt:
+   name: "{{ docker_packages }}"
+   state: present
+   update_cache: true
+  when: ansible_os_family == "Debian"
+
+# Both
+
+- name: Python requests library (Ansible's docker modules need it)
+  ansible.builtin.package:
+   name: python3-requests
+   state: present
+
+- name: Docker running now and at boot
+  ansible.builtin.service:
+   name: docker
+   state: started
+   enabled: true
+
+- name: Let the admin user run docker without sudo
+  ansible.builtin.user:
+   name: "{{ docker_admin_user }}"
+   groups: docker
+   append: true

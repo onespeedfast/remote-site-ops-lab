@@ -1,0 +1,19 @@
+# Tideboard web front end (rendered by Ansible)
+server {
+  listen 80;          # port INSIDE the container
+  server_name _;      # answer for any hostname
+
+  # Static front page, served from the tideboard_html volume
+  location / {
+    root /usr/share/nginx/html;
+    index index.html;
+  }
+
+  # Anything under /api/ goes to the api container. The trailing
+  #  slash on proxy_pass strips "/api/", so /api/health arrives
+  #  at the API as /health.
+  location /api/ {
+    proxy_pass http://api:8000/;
+    proxy_set_header Host $host;
+  }
+}

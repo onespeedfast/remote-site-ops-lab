@@ -1,0 +1,91 @@
+---
+- name: Project folder on the app host
+  ansible.builtin.file:
+    path: "{{ tideboard_dir }}"
+    state: directory
+    owner: root
+    group: root
+    mode: "0755"
+
+- name: Copy the API script
+  ansible.builtin.copy:
+    src: api.py
+    dest: "{{  tideboard_dir }}/api.py"
+    mode: "0644"
+  notify: Recreate Tideboard
+
+- name: Copy the front page (source for the volume)
+  ansible.builtin.copy:
+    src: index.html
+    dest: "{{ tideboard_dir }}/index.html"
+    mode: "0644"
+  register: tideboard_index
+
+- name: Render nginx config
+  ansible.builtin.template:
+    src: nginx.conf.j2
+    dest: "{{ tideboard_dir }}/nginx.conf"
+    mode: "0644"
+  notify: Recreate Tideboard
+
+- name: Render Compose file
+  ansible.builtin.template:
+    src: docker-compose.yml.j2
+    dest: "{{ tideboard_dir }}/docker-compose.yml"
+    mode: "0644"
+
+- name: Render env file from vault secrets (root only, never logged)
+  ansible.builtin.template:
+    src: tideboard.env.j2
+    dest: "{{ tideboard_dir }}/tideboard.env"
+    owner: root
+    group: root
+    mode: "0600"
+  no_log: true
+  notify: Recreate Tideboard
+
+- name: Named volume for the web page
+  community.docker.docker_volume:
+    name: "{{ tideboard_volume_name }}"
+    state: present
+  register: tideboard_vol
+
+- name: Seed index.html into the volume only when page or volume is new
+  ansible.builtin.command:
+    argv:
+      - docker
+      - run
+      - --rm
+      - -v
+      - "{{ tideboard_volume_name }}:/dest"
+      - -v
+      - "{{ tideboard_dir }}/index.html:/src/index.html:ro"
+      - "{{ tideboard_nginx_image }}"
+      - cp
+      - /src/index.html
+      - /dest/index.html
+  when: tideboard_index is changed or tideboard_vol is changed
+  # It only runs when needed (the when: above), and then it does change
+  #  something so report it as a change
+  changed_when: true
+
+- name: Open the web port in firewalld (Rocky)
+  ansible.posix.firewalld:
+    port: "{{ tideboard_http_port }}/tcp"
+    permanent: true
+    immediate: true
+    state: enabled
+  when: ansible_os_family == "RedHat"
+
+- name: Open the web port in ufw (Debian)
+  community.general.ufw:
+    rule: allow
+    port: "{{ tideboard_http_port }}"
+    proto: tcp
+  when: ansible_os_family == "Debian"
+
+- name: Bring the Compose project up
+  community.docker.docker_compose_v2:
+    project_src: "{{ tideboard_dir }}"
+    state: present
+    pull: missing

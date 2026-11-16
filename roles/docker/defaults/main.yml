@@ -1,0 +1,11 @@
+---
+# Who may run docker without sudo
+docker_admin_user: "{{ narr_admin_user | default ('labadmin')}}"
+
+# Docker CE packages from Docker's repo (same names on both distros)
+docker_packages:
+ - docker-ce                  # the engine (dockerd)
+ - docker-ce-cli              # the docker command
+ - containerd.io              # low-level container runtime
+ - docker-buildx-plugin       # modern image builder
+ - docker-compose-plugin      # docker compose v2

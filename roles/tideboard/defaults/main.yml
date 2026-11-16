@@ -1,0 +1,10 @@
+---
+# Where the Compose project lives on the app host
+tideboard_dir: /opt/tideboard
+# Host port for the web front end (group_vars/app.yml also sets it)
+tideboard_http_port: 8080
+# Pinned image tags: same bits every deploy, no surprise upgrades
+tideboard_nginx_image: "docker.io/library/nginx:1.27.2-alpine"
+tideboard_api_image: "docker.io/library/python:3.12.7-alpine"
+# Named Docker volume that holds the web page
+tideboard_volume_name: tideboard_html

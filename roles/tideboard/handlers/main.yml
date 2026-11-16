@@ -1,0 +1,8 @@
+---
+# Containers keep the old copy of a bind-mounted file after Ansible
+#  replaces it, so config changes need the containers recreated.
+- name: Recreate Tideboard
+  community.docker.docker_compose_v2:
+    project_src: "{{ tideboard_dir }}"
+    state: present
+    recreate: always

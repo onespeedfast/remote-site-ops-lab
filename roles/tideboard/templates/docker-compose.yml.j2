@@ -1,0 +1,45 @@
+# Tideboard Compose project (rendered by Ansible)
+services:
+  web:
+    image: {{ tideboard_nginx_image }}
+    ports:
+      # host port: container port
+      - "{{ tideboard_http_port }}:80"
+    volumes:
+      # named volume holding the page, read-only
+      - {{ tideboard_volume_name }}:/usr/share/nginx/html:ro
+      # our nginx config from /opt/tideboard, read-only
+      - ./nginx.conf:/etc/nginx/conf.d/default.conf:ro
+    depends_on:
+      api:
+        # don't start web until api passes its health check
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD-SHELL", "pidof nginx || exit 1"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+    restart: unless-stopped
+
+  api:
+    image: {{ tideboard_api_image}}
+    working_dir: /app
+    command: ["python", "/app/api.py"]
+    env_file:
+      # secrets, rendered from the vault
+      - ./tideboard.env
+    volumes:
+      - ./api.py:/app/api.py:ro
+    # No "ports:" on purpose: the API is only reachable through web
+    healthcheck:
+      test: ["CMD-SHELL", "python -c \"import urllib.request; urllib.request.urlopen('http://127.0.0.1:8000/health')\""]
+      interval: 20s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+    restart: unless-stopped
+
+volumes:
+  {{ tideboard_volume_name }}:
+    # created by Ansible, so Compose users it as is
+    external: true

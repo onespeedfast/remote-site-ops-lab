@@ -1,0 +1,8 @@
+---
+galaxy_info:
+ role_name: docker
+ author: Carlos Akin
+ license: MIT
+ description: Docker CE + Compose v2 on Rocky 9 and Debian 12
+ min_ansible_version: "2.16"
+dependencies: []
