@@ -7,5 +7,3 @@
    # Rocky calls the service sshd, Debian calls it ssh
    name: "{{ 'sshd' if ansible_os_family == 'RedHat' else 'ssh' }}"
    state: restarted
-
-
