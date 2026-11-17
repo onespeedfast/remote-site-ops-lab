@@ -1,0 +1,11 @@
+---
+# ansible-lint settings. "production" is the strictest built in profile
+profile: production
+
+# Paths ansible-lint should not read
+exclude_paths:
+  - .venv/
+  - compose/
+  - docs/
+  # Encrypted files aren't YAML to a linter; skip them
+  - inventory/group_vars/*/vault.yml

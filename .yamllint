@@ -1,0 +1,27 @@
+---
+# yamllint settings for this repo (ansible-lint reads them too).
+extends: default
+
+rules:
+  # Warn past 120 characters, don't fail. Long URLs go in
+  #  role defaults instead (see section 6).
+  line-length:
+    max: 120
+    level: warning
+  # The next five rules are settings ansible-lint insists on
+  #  whenever a .yamllint file exists.
+  comments:
+    min-spaces-from-content: 1
+  comments-indentation: false
+  braces:
+    max-spaces-inside: 1
+  octal-values:
+    forbid-implicit-octal: true
+    forbid-explicit-octal: true
+  truthy:
+    allowed-values: ["true", "false"]
+
+# Encrupted files are not YAML to a linter; skip them.
+ignore: |
+  .venv/
+  inventory/group_vars/*/vault.yml

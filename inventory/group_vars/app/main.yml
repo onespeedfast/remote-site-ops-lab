@@ -1,0 +1,9 @@
+---
+# Settings for the app tier only (narr-app01).
+tideboard_http_port: 8080
+baseline_host_purpose: "Tideboard application host"
+
+# Secrets: the real values live in vault.yml next to
+#  this file, under vault_ names. These lines point at them
+tideboard_api_token: "{{ vault_tideboard_api_token }}"
+tideboard_db_password: "{{ vault_tideboard_db_password }}"

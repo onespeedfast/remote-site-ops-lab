@@ -1,0 +1,23 @@
+---
+- name: Ensure admin user exists and is in the sudo group
+  ansible.builtin.user:
+    name: "{{ baseline_admin_user }}"
+    groups: "{{ baseline_sudo_group }}"
+    append: true
+    shell: /bin/bash
+    state: present
+
+- name: Passwordless sudo for admin (only for this lab, tighten later)
+  ansible.builtin.copy:
+    dest: "/etc/sudoers.d/{{ baseline_admin_user }}"
+    content: "{{ baseline_admin_user }} ALL=(ALL) NOPASSWD:ALL\n"
+    owner: root
+    group: root
+    mode: "0440"
+    validate: "visudo -cf %s"
+
+- name: Install admin ssh public key from the control node
+  ansible.posix.authorized_key:
+    user: "{{ baseline_admin_user }}"
+    key: "{{ lookup('file', lookup('env', 'HOME') + '/.ssh/narr_ed25519.pub') }}"
+    state: present

@@ -1,0 +1,6 @@
+---
+- name: Keep SELinux enforcing with the targeted policy for Rocky
+  ansible.posix.selinux:
+    policy: targeted
+    state: enforcing
+  when: ansible_os_family == "RedHat"

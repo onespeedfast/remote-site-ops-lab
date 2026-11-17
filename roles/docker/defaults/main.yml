@@ -1,6 +1,6 @@
 ---
 # Who may run docker without sudo
-docker_admin_user: "{{ narr_admin_user | default ('labadmin')}}"
+docker_admin_user: "{{ narr_admin_user | default('labadmin') }}"
 
 # Docker CE packages from Docker's repo (same names on both distros)
 docker_packages:
@@ -9,3 +9,9 @@ docker_packages:
  - containerd.io              # low-level container runtime
  - docker-buildx-plugin       # modern image builder
  - docker-compose-plugin      # docker compose v2
+
+# Where packages come from. Long URLs love here so task lines
+# stay short.
+docker_rhel_repo_url: "https://download.docker.com/linux/rhel/docker-ce.repo"
+docker_debian_repo_url: "https://download.docker.com/linux/debian"
+docker_debian_gpg_url: "https://download.docker.com/linux/debian/gpg"

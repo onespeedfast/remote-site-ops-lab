@@ -1,0 +1,53 @@
+---
+# Lockout trap: same rules as Lab 01. The drop-in text is
+#  byte-for-byte
+
+- name: Install sshd hardening drop in
+  ansible.builtin.copy:
+    dest: /etc/ssh/sshd_config.d/10-narr-hardening.conf
+    owner: root
+    group: root
+    mode: "0600"
+    content: |
+      # Managed by Ansible. Do not edit by hand.
+      PermitRootLogin no
+      PasswordAuthentication no
+      KbdInteractiveAuthentication no
+      PubkeyAuthentication yes
+      X11Forwarding no
+      AllowUsers {{ baseline_admin_user }}
+  notify: Restart sshd
+  tags: [ssh_hardening]
+
+- name: Test the full sshd config before any restart
+  ansible.builtin.command: /usr/sbin/sshd -t
+  changed_when: false
+  tags: [ssh_hardening]
+
+- name: Ensure sshd is running and enabled
+  ansible.builtin.service:
+    name: "{{ baseline_ssh_service }}"
+    state: started
+    enabled: true
+
+- name: Restart sshd now if the drop in changed so we can verify
+  ansible.builtin.meta: flush_handlers
+  tags: [ssh_hardening]
+
+- name: Read the effective sshd settings
+  ansible.builtin.command: /usr/sbin/sshd -T
+  register: baseline_sshd_effective
+  changed_when: false
+  when: not ansible_check_mode
+  tags: [ssh_hardening]
+
+- name: Prove root login and password logins are off
+  ansible.builtin.assert:
+    that:
+      - "'permitrootlogin no' in baseline_sshd_effective.stdout_lines"
+      - "'passwordauthentication no' in baseline_sshd_effective.stdout_lines"
+      - "'kbdinteractiveauthentication no' in baseline_sshd_effective.stdout_lines"
+    fail_msg: "sshd is not hardened. Check file order in /etc/ssh/sshd_config.d/"
+    quiet: true
+  when: not ansible_check_mode
+  tags: [ssh_hardening]

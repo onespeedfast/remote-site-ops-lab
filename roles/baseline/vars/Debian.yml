@@ -1,0 +1,11 @@
+---
+# Facts about Debian that this role's tasks depend on.
+baseline_os_packages:
+  - chrony
+  - ufw
+  - sudo
+  - unattended-upgrades
+  - apt-listchanges
+baseline_sudo_group: sudo
+baseline_ssh_service: ssh
+baseline_chrony_service: chrony

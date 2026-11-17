@@ -1,11 +1,15 @@
 ---
-# site.yml: the whole site in order. It grows as the lab grows
+# site.yml: the whole site in order.
+# Role tags: baseline, docker, tideboard, Finer tags live inside
+#  baseline. See them all: ansible-playbook playbools/site.yml --list-tags
+
 - name: NARR baseline (every host)
   hosts: all
   gather_facts: true
   become: true
   roles:
    - role: baseline
+     tags: [baseline]
 
 - name: NARR docker engines (app + logging tiers)
   hosts: app:logging
@@ -13,6 +17,7 @@
   become: true
   roles:
    - role: docker
+     tags: [docker]
 
 - name: NARR Tideboard application (app tier)
   hosts: app
@@ -20,3 +25,4 @@
   become: true
   roles:
    - role: tideboard
+     tags: [tideboard]

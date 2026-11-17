@@ -1,0 +1,15 @@
+---
+# Same list variables on both distros; vars/OS.yml fills it in
+- name: Install baseline packages for Rocky
+  ansible.builtin.dnf:
+    name: "{{ baseline_os_packages + baseline_extra_packages }}"
+    state: present
+  when: ansible_os_family == "RedHat"
+
+- name: Install baseline packages for Debian
+  ansible.builtin.apt:
+    name: "{{ baseline_os_packages + baseline_extra_packages }}"
+    state: present
+    update_cache: true
+    cache_valid_time: 3600
+  when: ansible_os_family == "Debian"

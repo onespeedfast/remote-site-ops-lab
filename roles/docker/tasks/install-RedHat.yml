@@ -1,0 +1,16 @@
+---
+# Rocky 9. main.yml only includes this file on the RHEL family
+- name: Install dnf plugins, which provide 'dnf config-manager'
+  ansible.builtin.dnf:
+    name: dnf-plugins-core
+    state: present
+
+- name: Add Docker CE repo for RHEL/Rocky
+  ansible.builtin.command:
+    cmd: "dnf config-manager --add-repo {{ docker_rhel_repo_url }}"
+    creates: /etc/yum.repos.d/docker-ce.repo
+
+- name: Install Docker CE
+  ansible.builtin.dnf:
+    name: "{{ docker_packages }}"
+    state: present

@@ -1,0 +1,14 @@
+---
+# Facts about Rocky/RHEL that this role's tasks depend on.
+# Loaded by include_vars, which beat inventory on purpose:
+#  these describe how the OS works, not a choice a site makes.
+baseline_os_packages:
+  - chrony                          # time sync
+  - firewalld                       # Rocky's firewall service
+  - sudo
+  - policycoreutils-python-utils    # semanage for SELinux labels
+  - setools-console                 # seinfo/sesearch, SELinux queries
+  - dnf-automatic                   # scheduled security updates
+baseline_sudo_group: wheel
+baseline_ssh_service: sshd
+baseline_chrony_service: chronyd
